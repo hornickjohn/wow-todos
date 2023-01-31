@@ -1,0 +1,175 @@
+<html>
+    <body>
+        <h1>Mount Comparison</h1>
+        <input id="inp1" value="Barkbite-Thrall">
+        <input id="inp2" value="Katsuchan-Thrall">
+        <button onclick="CompareMounts()">Go</button>
+        <div style="margin-top:10px; display:flex;">
+        <div id="displaystuff" style="width:45%; height:800px; overflow-y:auto; border-radius:20px; padding:5px;"></div>
+        <div id="displaymount" style="width:45%; border:5px solid black; border-radius:20px; padding:5px;"></div>
+        </div>
+        <script>
+        
+        function HaveMount(mounts1, mounts2, id) {
+        let rv = [false,false];
+        for(let i = 0; i < mounts1.length; i++) {
+            console.log((Math.round((i / mounts1.length) * 100) / 100) + "%");
+            if(mounts1[i].mount.id === id) {
+                rv[0] = true;
+                break;
+            }
+        }
+        for(let i = 0; i < mounts2.length; i++) {
+            if(mounts2[i].mount.id === id) {
+                rv[1] = true;
+                break;
+            }
+        }
+        return rv;
+    }
+    
+    function HrefCleanser(link) {
+        const pieces = link.split('namespace');
+        const rightpieces = pieces[1].split('-');
+        let rv = pieces[0];
+        rv += 'namespace' + rightpieces[0];
+        if(!rightpieces[1].includes('.')) {
+            rv += '-' + rightpieces[1];
+        }
+        for(let i = 2; i < rightpieces.length; i++) {
+            rv += '-' + rightpieces[i];
+        }
+        rv += '&locale=en_US&access_token=${req.user.token}';
+        return rv;
+    }
+    
+    function DisplayMount(event) {
+        const mountid = event.target.getAttribute('id');
+    
+        const url = 'https://us.api.blizzard.com/data/wow/mount/' + mountid + '?namespace=static-us&locale=en_US&access_token=${req.user.token}';
+    
+        fetch(url)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            let head = document.createElement('h2');
+            head.textContent = data.name;
+            let par1 = document.createElement('p');
+            if(data.source) {
+                par1.textContent = "Source: " + data.source.name;
+            } else {
+                par1.textContent = "Source unknown... how mysterious.";
+            }
+            let link = document.createElement('a');
+            let astr = 'https://www.wowhead.com/search?q=';
+            astr += data.name.toLowerCase().replace(' ','+');
+            link.setAttribute('href',astr);
+            link.setAttribute('target','_blank');
+            link.textContent = "Wowhead";
+            let imgwrapper = document.createElement('div');
+            let img = document.createElement('img');
+            img.setAttribute('src', 'https://render.worldofwarcraft.com/us/npcs/zoom/creature-display-' + data.creature_displays[0].id + '.jpg');
+            img.style = "max-width:80%; max-height:500px; margin:10px;";
+            imgwrapper.appendChild(img);
+            imgwrapper.style = "text-align:center;"
+            let par2 = document.createElement('p');
+            par2.textContent = data.description;
+    
+            let mountDisp = document.getElementById('displaymount');
+            mountDisp.innerHTML = "";
+            mountDisp.appendChild(head);
+            mountDisp.appendChild(par1);
+            mountDisp.appendChild(link);
+            mountDisp.appendChild(imgwrapper);
+            mountDisp.appendChild(par2);
+    
+            if(data.requirements) {
+                let par3 = document.createElement('p');
+                par3.innerHTML = "Requirements:";
+                let keys = Object.keys(data.requirements);
+                for(let i = 0; i < keys.length; i++) {
+                    if(data.requirements[keys[i]].length) {
+                        for(let j = 0; j < data.requirements[keys[i]].length; j++) {
+                            let ind = "";
+                            if(data.requirements[keys[i]].length > 1) {
+                                ind = j + 1;
+                            }
+                            par3.innerHTML += "<br>" + keys[i] + ind + " - " + data.requirements[keys[i]][j].name;
+                        }
+                    } else {
+                        par3.innerHTML += "<br>" + keys[i] + " - " + data.requirements[keys[i]].name;
+                    }
+                }
+                mountDisp.appendChild(par3);
+            }
+        });
+    }
+    
+    function CompareMounts() {
+        let mounts1 = [];
+        let tkns = document.getElementById('inp1').value.split('-')
+        let server = tkns[1].toLowerCase();
+        let char = tkns[0].toLowerCase();
+        let url = "https://us.api.blizzard.com/profile/wow/character/" + 
+        server + "/" + char + 
+        "/collections/mounts?namespace=profile-us&locale=en_US&access_token=${req.user.token}";
+        const disp = document.getElementById('displaystuff');
+        fetch(url)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            mounts1 = data.mounts;
+    
+            let mounts2 = [];
+            tkns = document.getElementById('inp2').value.split('-')
+            server = tkns[1].toLowerCase();
+            let char2 = tkns[0].toLowerCase();
+            url = "https://us.api.blizzard.com/profile/wow/character/" + 
+            server + "/" + char2 + 
+            "/collections/mounts?namespace=profile-us&locale=en_US&access_token=${req.user.token}";
+    
+            fetch(url)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data2) {
+                mounts2 = data2.mounts;
+                
+                //we now have mounts1 and mounts2, grab index
+                fetch("https://us.api.blizzard.com/data/wow/mount/index?namespace=static-us&locale=en_US&access_token=${req.user.token}")
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data3) {
+                    let allmounts = data3.mounts;
+                    
+                    for(let i = 0; i < allmounts.length; i++) {
+                        let id = allmounts[i].id;
+                        let has = HaveMount(mounts1, mounts2, id);
+                        if(has[0] !== has[1]) {
+                            let par = document.createElement('p');
+                            let strVal = "";
+                            if(has[0]) {
+                                strVal += char2[0].toUpperCase() + char2.substring(1);
+                            } else {
+                                strVal += char[0].toUpperCase() + char.substring(1);
+                            }
+                            strVal += " needs " + allmounts[i].name + "!";
+                            par.textContent = strVal;
+                            par.setAttribute('id',allmounts[i].id);
+                            par.addEventListener('click', DisplayMount);
+    
+                            disp.appendChild(par);
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+        </script>
+        <a href="/logout">Logout</a>
+    </body>
+</html>

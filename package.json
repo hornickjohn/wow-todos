@@ -1,0 +1,33 @@
+{
+  "name": "wow-todos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "base64url": "^3.0.1",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "oauth": "^0.9.15",
+    "passport": "^0.6.0",
+    "passport-bnet": "^2.0.0",
+    "passport-oauth2": "^1.6.1",
+    "passport-strategy": "^1.0.0",
+    "uid2": "^0.0.4",
+    "utils-merge": "^1.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hornickjohn/wow-todos.git"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/hornickjohn/wow-todos/issues"
+  },
+  "homepage": "https://github.com/hornickjohn/wow-todos#readme"
+}
